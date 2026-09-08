@@ -1784,8 +1784,9 @@ async def admin_force_join_input(message: types.Message, state: FSMContext):
         return
 
     if not re.fullmatch(
-        r"https?://t\.me/(?:\+)?[A-Za-z0-9_+\-/]{3,120}",
-        join_link
+        r"https?://t\.me/(?:[A-Za-z0-9_]{5,32}|\+[A-Za-z0-9_-]{3,120})/?",
+        join_link,
+        flags=re.IGNORECASE
     ):
         await message.answer(
             "❌ Invalid JOIN_LINK.",
@@ -3710,10 +3711,17 @@ async def admin_purchase_channel_input(message: types.Message, state: FSMContext
 
     if channel_link == "-":
         channel_link = ""
-    elif not re.fullmatch(r"https?://t\.me/[A-Za-z0-9_]{5,32}", channel_link):
+    elif not re.fullmatch(
+        r"https?://t\.me/(?:[A-Za-z0-9_]{5,32}|\+[A-Za-z0-9_-]{3,120})/?",
+        channel_link,
+        flags=re.IGNORECASE
+    ):
         await message.answer(
             "❌ Invalid channel link.\n\n"
-            "Use <code>https://t.me/yourchannel</code> or <code>-</code>.",
+            "Use a public link such as "
+            "<code>https://t.me/yourchannel</code> "
+            "or a private invite link such as "
+            "<code>https://t.me/+InviteCode</code>.",
             parse_mode="HTML"
         )
         return
