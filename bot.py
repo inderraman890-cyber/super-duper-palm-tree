@@ -3831,9 +3831,6 @@ async def publish_purchase_announcement(
     subcategory: str,
     price: float,
     order_id: str,
-    buyer_name: str = "",
-    buyer_username: str = "",
-    stock_left: int = 0,
 ) -> bool:
     """Publish a privacy-safe completed-purchase announcement."""
     chat_ref = get_bot_setting("purchase_channel_chat_id", "").strip()
@@ -3860,26 +3857,14 @@ async def publish_purchase_announcement(
         me_username = getattr(me, "username", None)
         buy_url = f"https://t.me/{me_username}" if me_username else "https://t.me/"
 
-        safe_name = buyer_name.strip() or "Buyer"
-        safe_username = buyer_username.strip()
-        buyer_label = (
-            f"@{safe_username.lstrip('@')}"
-            if safe_username
-            else safe_name
-        )
-
         text = (
             "✅ <b>New Account Purchase</b>\n\n"
-            "━ Buyer: "
-            f"<b>{html.escape(buyer_label)}</b>\n"
             "━ Category: "
             f"<b>{html.escape(str(category or 'Account'))}</b>\n"
             "━ Account Group: "
             f"<b>{html.escape(str(subcategory or 'Account'))}</b>\n"
             "━ Price: "
             f"<b>${float(price):.2f}</b>\n"
-            "━ Products Left: "
-            f"<b>{max(0, int(stock_left))}</b>\n"
             "━ Order: "
             f"<code>{html.escape(str(order_id))}</code>\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
@@ -3935,10 +3920,7 @@ async def cb_admin_purchase_channel_test(callback: types.CallbackQuery):
         category="Instagram",
         subcategory="2012",
         price=6.00,
-        order_id="TEST-ANNOUNCEMENT",
-        buyer_name="Test Buyer",
-        buyer_username="test_buyer",
-        stock_left=0,
+        order_id="TEST-ANNOUNCEMENT"
     )
 
     await callback.answer(
@@ -6297,21 +6279,6 @@ async def cb_buy_item(callback: types.CallbackQuery):
             )
             return
 
-        if subcategory_id:
-            remaining_row = cursor.execute(
-                "SELECT COUNT(*) FROM accounts "
-                "WHERE subcategory_id=? AND stock_count>0",
-                (subcategory_id,)
-            ).fetchone()
-        else:
-            remaining_row = cursor.execute(
-                "SELECT COUNT(*) FROM accounts "
-                "WHERE category=? AND stock_count>0 AND subcategory_id IS NULL",
-                (category,)
-            ).fetchone()
-
-        stock_left = int(remaining_row[0] if remaining_row else 0)
-
         order_title = subcategory_name or title or "Account"
         cursor.execute(
             "INSERT INTO orders (id, telegram_id, category, item_title, price, status) "
@@ -6359,16 +6326,6 @@ async def cb_buy_item(callback: types.CallbackQuery):
         subcategory=order_title,
         price=float(price),
         order_id=ord_id,
-        buyer_name=(
-            getattr(callback.from_user, "full_name", None)
-            or getattr(callback.from_user, "first_name", None)
-            or "Buyer"
-        ),
-        buyer_username=(
-            getattr(callback.from_user, "username", None)
-            or ""
-        ),
-        stock_left=stock_left,
     )
     if not announcement_ok:
         logging.info(
