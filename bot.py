@@ -152,6 +152,7 @@ class PromoState(StatesGroup):
     waiting_for_code = State()
 
 class AdminState(StatesGroup):
+    waiting_for_payment_review_channel = State()
     waiting_for_force_join_channel = State()
     waiting_for_purchase_channel = State()
     waiting_for_admin_id = State()
